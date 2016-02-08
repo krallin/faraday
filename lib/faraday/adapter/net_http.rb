@@ -26,6 +26,7 @@ module Faraday
 
       NET_HTTP_EXCEPTIONS << OpenSSL::SSL::SSLError if defined?(OpenSSL)
       NET_HTTP_EXCEPTIONS << Net::OpenTimeout if defined?(Net::OpenTimeout)
+      NET_HTTP_EXCEPTIONS << Net::ReadTimeout if defined?(Net::ReadTimeout)
 
       def call(env)
         super
@@ -41,6 +42,10 @@ module Faraday
           rescue *NET_HTTP_EXCEPTIONS => err
             if defined?(OpenSSL) && OpenSSL::SSL::SSLError === err
               raise Faraday::SSLError, err
+            elsif defined?(Net::OpenTimeout) && Net::OpenTimeout === err
+              raise Faraday::Error::TimeoutError, err
+            elsif defined?(Net::ReadTimeout) && Net::ReadTimeout === err
+              raise Faraday::Error::TimeoutError, err
             else
               raise Error::ConnectionFailed, err
             end
